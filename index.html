@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="id" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlowState — Kanban & Focus Workspace</title>
+    <title>FlowState — Tactile Studio & Focus Workspace (SQLite)</title>
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -18,136 +18,786 @@
 <body>
     <div id="app">
 
-        <!-- ═══ HEADER ═══ -->
-        <header class="app-header">
-            <div class="header-left">
-                <div class="logo">
-                    <svg class="logo-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                    </svg>
-                    <span class="logo-text">FlowState</span>
-                </div>
-                <span class="header-date" id="headerDate"></span>
-            </div>
-
-            <div class="header-center">
-                <div class="workload-indicator">
-                    <div class="workload-top">
-                        <span class="workload-label">Today's Load</span>
-                        <span class="workload-hours" id="workloadHours">0m</span>
-                        <span class="workload-warning" id="workloadWarning"
-                            title="Heavy workload — over 6 hours!">⚠</span>
+        <!-- ═══ SPLIT-SCREEN AUTH GATEWAY (GERBANG MASUK FLOWSTATE) ═══ -->
+        <div class="auth-gate-overlay" id="authGateOverlay">
+            <div class="auth-gate-container">
+                <!-- Left Showcase Side -->
+                <div class="auth-showcase">
+                    <div class="auth-brand">
+                        <svg class="logo-icon" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                        </svg>
+                        <span class="auth-brand-name">FlowState</span>
+                        <span class="auth-brand-tag">Studio v2.5</span>
                     </div>
-                    <div class="workload-bar">
-                        <div class="workload-bar-fill" id="workloadBarFill"></div>
+
+                    <div class="auth-hero-text">
+                        <h1>Workspace Fokus & Kanban Berbasis SQLite</h1>
+                        <p>Kelola alur kerja dengan kedalaman fisik taktil, pengatur waktu fokus Zen, dan analitik
+                            produktivitas cerdas.</p>
                     </div>
-                    <span class="workload-completion" id="completionText">0 of 0 done</span>
-                </div>
-            </div>
 
-            <div class="header-right">
-                <button class="header-btn" id="searchBtn" title="Search (Ctrl+K)">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round">
-                        <circle cx="11" cy="11" r="8" />
-                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                    </svg>
-                    <kbd>⌘K</kbd>
-                </button>
-                <button class="header-btn" id="viewToggle" title="Toggle compact view">
-                    <svg class="icon-detailed" width="15" height="15" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                        <rect x="3" y="3" width="7" height="7" />
-                        <rect x="14" y="3" width="7" height="7" />
-                        <rect x="3" y="14" width="7" height="7" />
-                        <rect x="14" y="14" width="7" height="7" />
-                    </svg>
-                    <svg class="icon-compact" width="15" height="15" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                        <line x1="3" y1="6" x2="21" y2="6" />
-                        <line x1="3" y1="12" x2="21" y2="12" />
-                        <line x1="3" y1="18" x2="21" y2="18" />
-                    </svg>
-                </button>
-                <button class="header-btn" id="themeToggle" title="Toggle dark mode">
-                    <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2" stroke-linecap="round">
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                    </svg>
-                    <svg class="icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2" stroke-linecap="round">
-                        <circle cx="12" cy="12" r="5" />
-                        <line x1="12" y1="1" x2="12" y2="3" />
-                        <line x1="12" y1="21" x2="12" y2="23" />
-                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                        <line x1="1" y1="12" x2="3" y2="12" />
-                        <line x1="21" y1="12" x2="23" y2="12" />
-                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                    </svg>
-                </button>
-                <button class="header-btn btn-reset" id="resetBtn" title="Reset to demo data">Reset</button>
-                <button class="btn-primary" id="newTaskBtn">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                        stroke-linecap="round">
-                        <line x1="12" y1="5" x2="12" y2="19" />
-                        <line x1="5" y1="12" x2="19" y2="12" />
-                    </svg>
-                    New Task
-                </button>
-            </div>
-        </header>
+                    <!-- 3D Interactive Floating Card Preview -->
+                    <div class="auth-3d-stage" id="auth3DStage">
+                        <div class="auth-3d-card" id="auth3DCard">
+                            <div class="auth-card-head">
+                                <span class="priority-dot dot-tinggi"></span>
+                                <span class="auth-task-id">TGS-101</span>
+                                <span class="auth-live-pill">LIVE PREVIEW</span>
+                            </div>
+                            <h4 class="auth-card-title">Merancang skema database & ERD</h4>
+                            <div class="auth-sub-preview">
+                                <div class="auth-sub-row done"><span>✓</span> Tentukan entitas utama & atribut</div>
+                                <div class="auth-sub-row done"><span>✓</span> Normalisasi tabel ke 3NF</div>
+                                <div class="auth-sub-row"><span>○</span> Validasi foreign key relasi</div>
+                            </div>
+                            <div class="auth-card-footer">
+                                <span class="tag tag-koding">Koding</span>
+                                <span class="auth-timer-badge">⏱ 45 mnt fokus</span>
+                            </div>
+                        </div>
+                    </div>
 
-        <!-- ═══ FILTER BAR ═══ -->
-        <div class="filter-bar">
-            <div class="filter-group">
-                <span class="filter-label">Priority</span>
-                <div class="filter-pills" id="priorityFilters">
-                    <button class="filter-pill active" data-priority="all">All</button>
-                    <button class="filter-pill" data-priority="high"><span
-                            class="priority-dot dot-high"></span>High</button>
-                    <button class="filter-pill" data-priority="medium"><span
-                            class="priority-dot dot-medium"></span>Medium</button>
-                    <button class="filter-pill" data-priority="low"><span
-                            class="priority-dot dot-low"></span>Low</button>
+                    <!-- Dynamic Productivity Quote -->
+                    <div class="auth-quote-box">
+                        <span class="quote-symbol">“</span>
+                        <p id="authQuoteText">Fokus adalah seni mengetahui apa yang harus diabaikan demi menghasilkan
+                            karya terbaik.</p>
+                        <span class="quote-author" id="authQuoteAuthor">— Prinsip Produktivitas FlowState</span>
+                    </div>
+
+                    <!-- Feature Badges -->
+                    <div class="auth-feature-pills">
+                        <span class="feat-pill">⚡ SQLite Local Engine</span>
+                        <span class="feat-pill">⏱ Pomodoro Zen Audio</span>
+                        <span class="feat-pill">📊 Analitik Real-time</span>
+                        <span class="feat-pill">🔒 Sesi Terisolasi</span>
+                    </div>
                 </div>
-            </div>
-            <div class="filter-group">
-                <span class="filter-label">Category</span>
-                <div class="filter-pills" id="categoryFilters">
-                    <button class="filter-pill active" data-category="all">All</button>
-                    <button class="filter-pill" data-category="Dev">Dev</button>
-                    <button class="filter-pill" data-category="Design">Design</button>
-                    <button class="filter-pill" data-category="Study">Study</button>
-                    <button class="filter-pill" data-category="Personal">Personal</button>
+
+                <!-- Right Form Side -->
+                <div class="auth-card-side">
+                    <!-- 1-Click Instant Evaluator Demo Login -->
+                    <div class="demo-evaluator-card">
+                        <div class="demo-card-content">
+                            <div class="demo-icon">⚡</div>
+                            <div>
+                                <strong>Mode Evaluasi Instan</strong>
+                                <p>Langsung masuk sebagai Guru/Evaluator tanpa mendaftar.</p>
+                            </div>
+                        </div>
+                        <button class="btn-demo-instant" id="demoLoginBtn">Masuk Instan (Evaluator)</button>
+                    </div>
+
+                    <div class="auth-tabs">
+                        <button class="auth-tab active" id="tabLoginBtn">Masuk Akun</button>
+                        <button class="auth-tab" id="tabRegisterBtn">Daftar Baru</button>
+                    </div>
+
+                    <!-- Login Form -->
+                    <form class="auth-form" id="loginForm">
+                        <div class="tactile-form-group">
+                            <label class="tactile-label" for="loginEmail">Alamat Email</label>
+                            <div class="tactile-input-wrap">
+                                <div class="input-icon-left">
+                                    <svg class="tactile-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                                    </svg>
+                                </div>
+                                <input type="email" id="loginEmail" class="tactile-input" placeholder="nama@sekolah.id"
+                                    value="evaluator@flowstate.id" required autocomplete="email">
+                            </div>
+                        </div>
+                        <div class="tactile-form-group">
+                            <label class="tactile-label" for="loginPassword">Kata Sandi</label>
+                            <div class="tactile-input-wrap">
+                                <div class="input-icon-left">
+                                    <svg class="tactile-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                </div>
+                                <input type="password" id="loginPassword" class="tactile-input" placeholder="••••••••" value="demo123"
+                                    required autocomplete="current-password">
+                                <button type="button" class="btn-toggle-pwd tactile-eye-btn" data-target="loginPassword" title="Tampilkan / Sembunyikan Kata Sandi">
+                                    <svg class="eye-show" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                    <svg class="eye-hide" style="display:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="auth-error-msg" id="loginErrorMsg"></div>
+                        <button type="submit" class="btn-auth-submit" id="btnSubmitLogin">Masuk ke Ruang Kerja</button>
+                    </form>
+
+                    <!-- Register Form -->
+                    <form class="auth-form" id="registerForm" style="display:none;">
+                        <!-- Live ID Card Preview -->
+                        <div class="id-preview-box">
+                            <span class="id-preview-label">LIVE ID CARD BADGE</span>
+                            <div class="id-card-live">
+                                <div class="id-avatar-circle" id="previewAvatarCircle" style="background:#D95D39">A</div>
+                                <div class="id-info">
+                                    <strong id="previewNameText">Nama Anda</strong>
+                                    <span class="id-badge-role" id="previewRoleText">👨‍💻 Developer</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tactile-form-group">
+                            <label class="tactile-label" for="regName">Nama Lengkap</label>
+                            <div class="tactile-input-wrap">
+                                <div class="input-icon-left">
+                                    <svg class="tactile-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                </div>
+                                <input type="text" id="regName" class="tactile-input" placeholder="Contoh: Ahmad Siswa" required
+                                    autocomplete="name">
+                            </div>
+                        </div>
+
+                        <div class="tactile-form-group">
+                            <label class="tactile-label" for="regEmail">Alamat Email</label>
+                            <div class="tactile-input-wrap">
+                                <div class="input-icon-left">
+                                    <svg class="tactile-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                                    </svg>
+                                </div>
+                                <input type="email" id="regEmail" class="tactile-input" placeholder="ahmad@sekolah.id" required
+                                    autocomplete="email">
+                            </div>
+                        </div>
+
+                        <div class="tactile-form-group">
+                            <label class="tactile-label" for="regPassword">Kata Sandi</label>
+                            <div class="tactile-input-wrap">
+                                <div class="input-icon-left">
+                                    <svg class="tactile-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                </div>
+                                <input type="password" id="regPassword" class="tactile-input" placeholder="Minimal 4 karakter" required
+                                    autocomplete="new-password">
+                                <button type="button" class="btn-toggle-pwd tactile-eye-btn" data-target="regPassword" title="Tampilkan / Sembunyikan Kata Sandi">
+                                    <svg class="eye-show" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                    <svg class="eye-hide" style="display:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                            <!-- Password Strength Meter -->
+                            <div class="pwd-strength-container">
+                                <div class="pwd-meter-bars">
+                                    <div class="pwd-bar" id="pwdBar1"></div>
+                                    <div class="pwd-bar" id="pwdBar2"></div>
+                                    <div class="pwd-bar" id="pwdBar3"></div>
+                                    <div class="pwd-bar" id="pwdBar4"></div>
+                                </div>
+                                <span class="pwd-strength-label" id="pwdStrengthLabel">Kekuatan: -</span>
+                            </div>
+                        </div>
+
+                        <!-- Role Badge Selection -->
+                        <div class="tactile-form-group">
+                            <label class="tactile-label">Pilih Peran / Lencana</label>
+                            <div class="role-selector" id="roleSelector">
+                                <button type="button" class="role-pill active" data-role="👨‍💻 Developer">
+                                    <span class="role-title">👨‍💻 Dev</span>
+                                    <span class="role-check">✓</span>
+                                </button>
+                                <button type="button" class="role-pill" data-role="🎓 Pelajar">
+                                    <span class="role-title">🎓 Siswa</span>
+                                    <span class="role-check">✓</span>
+                                </button>
+                                <button type="button" class="role-pill" data-role="🎨 Desainer">
+                                    <span class="role-title">🎨 Desain</span>
+                                    <span class="role-check">✓</span>
+                                </button>
+                                <button type="button" class="role-pill" data-role="📋 Manajer">
+                                    <span class="role-title">📋 Tim</span>
+                                    <span class="role-check">✓</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Avatar Color Selection -->
+                        <div class="tactile-form-group">
+                            <label class="tactile-label">Warna Aksen Profil</label>
+                            <div class="color-picker-row" id="colorPickerRow">
+                                <button type="button" class="color-dot active" data-color="#D95D39"
+                                    style="background:#D95D39" title="Terracotta"></button>
+                                <button type="button" class="color-dot" data-color="#2A6F4E"
+                                    style="background:#2A6F4E" title="Forest Green"></button>
+                                <button type="button" class="color-dot" data-color="#D97706"
+                                    style="background:#D97706" title="Amber Ochre"></button>
+                                <button type="button" class="color-dot" data-color="#2563EB"
+                                    style="background:#2563EB" title="Cobalt Blue"></button>
+                                <button type="button" class="color-dot" data-color="#7C3AED"
+                                    style="background:#7C3AED" title="Studio Violet"></button>
+                            </div>
+                        </div>
+
+                        <div class="auth-error-msg" id="registerErrorMsg"></div>
+                        <button type="submit" class="btn-auth-submit" id="btnSubmitRegister">Daftar & Masuk Ruang
+                            Kerja</button>
+                    </form>
                 </div>
             </div>
         </div>
 
-        <!-- ═══ KANBAN BOARD ═══ -->
-        <main class="board" id="board"></main>
+        <!-- ═══ FLOATING WORKSPACE LAYOUT ═══ -->
+        <div class="workspace-layout">
 
-        <!-- ═══ FOCUS BAR ═══ -->
+            <!-- ─── 1. Left Floating Mini-Sidebar Island ─── -->
+            <aside class="sidebar-island" id="sidebarIsland">
+                <div class="sidebar-top">
+                    <div class="sidebar-logo">
+                        <svg class="logo-icon" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                        </svg>
+                        <span class="logo-text">FlowState</span>
+                    </div>
+                    <div class="workspace-pill">
+                        <span class="ws-dot"></span>
+                        <span>Ruang Kerja UKK</span>
+                    </div>
+                </div>
+
+                <!-- User Card in Sidebar -->
+                <div class="sidebar-user-card" id="sidebarUserCard" title="Profil Pengguna Aktif">
+                    <div class="user-avatar" id="sidebarUserAvatar">B</div>
+                    <div class="user-details">
+                        <span class="user-name" id="sidebarUserName">Pak Budi</span>
+                        <span class="user-role-badge" id="sidebarUserRole">Guru / Evaluator</span>
+                    </div>
+                </div>
+
+                <!-- Sidebar Nav Items -->
+                <nav class="sidebar-nav">
+                    <button class="nav-item active" id="navKanbanBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round">
+                            <rect x="3" y="3" width="7" height="18" rx="1" />
+                            <rect x="14" y="3" width="7" height="10" rx="1" />
+                        </svg>
+                        <span>Papan Kanban</span>
+                    </button>
+                    <button class="nav-item" id="navAnalyticsBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round">
+                            <path d="M18 20V10" />
+                            <path d="M12 20V4" />
+                            <path d="M6 20v-6" />
+                        </svg>
+                        <span>Analitik</span>
+                    </button>
+                    <button class="nav-item" id="navZenBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round">
+                            <polyline points="15 3 21 3 21 9" />
+                            <polyline points="9 21 3 21 3 15" />
+                            <line x1="21" y1="3" x2="14" y2="10" />
+                            <line x1="3" y1="21" x2="10" y2="14" />
+                        </svg>
+                        <span>Mode Zen</span>
+                    </button>
+                    <button class="nav-item" id="navHelpBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                            <line x1="12" y1="17" x2="12.01" y2="17" />
+                        </svg>
+                        <span>Pintasan (?)</span>
+                    </button>
+                </nav>
+
+                <div class="sidebar-footer">
+                    <div class="sidebar-toggles">
+                        <button class="sidebar-icon-btn" id="sidebarThemeBtn" title="Ganti Mode Gelap / Terang (D)">
+                            <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                            </svg>
+                            <svg class="icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="5" />
+                                <line x1="12" y1="1" x2="12" y2="3" />
+                                <line x1="12" y1="21" x2="12" y2="23" />
+                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                                <line x1="1" y1="12" x2="3" y2="12" />
+                                <line x1="21" y1="12" x2="23" y2="12" />
+                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                            </svg>
+                        </button>
+                        <button class="sidebar-icon-btn" id="sidebarSoundBtn" title="Efek Suara UI (S)">
+                            <svg class="icon-sound-on" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                            </svg>
+                            <svg class="icon-sound-off" style="display:none;" width="15" height="15" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                                <line x1="23" y1="9" x2="17" y2="15" />
+                                <line x1="17" y1="9" x2="23" y2="15" />
+                            </svg>
+                        </button>
+                    </div>
+                    <button class="logout-btn" id="sidebarLogoutBtn" title="Keluar dari akun">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                            <polyline points="16 17 21 12 16 7" />
+                            <line x1="21" y1="12" x2="9" y2="12" />
+                        </svg>
+                        <span>Keluar</span>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- ─── 2. Main Workspace Area ─── -->
+            <div class="main-workspace-area">
+
+                <!-- Floating Top Navbar Island -->
+                <header class="app-header header-island" id="headerIsland">
+                    <div class="header-left">
+                        <span class="header-date" id="headerDate"></span>
+                    </div>
+
+                    <div class="header-center">
+                        <div class="workload-indicator">
+                            <div class="workload-top">
+                                <span class="workload-label">Beban Hari Ini</span>
+                                <span class="workload-hours" id="workloadHours">0 mnt</span>
+                                <span class="workload-warning" id="workloadWarning"
+                                    title="Beban kerja tinggi — lebih dari 6 jam!">⚠</span>
+                            </div>
+                            <div class="workload-bar">
+                                <div class="workload-bar-fill" id="workloadBarFill"></div>
+                            </div>
+                            <span class="workload-completion" id="completionText">0 dari 0 selesai</span>
+                        </div>
+                    </div>
+
+                    <div class="header-right">
+                        <!-- Status Badge SQLite -->
+                        <div class="db-sync-badge saved" id="dbStatusBadge" title="Status sinkronisasi SQLite database">
+                            <span class="db-sync-dot"></span>
+                            <span class="db-sync-text" id="dbStatusText">Tersimpan di SQLite</span>
+                        </div>
+
+                        <!-- Tombol Pencarian -->
+                        <button class="header-btn" id="searchBtn" title="Cari tugas (Ctrl+K)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round">
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg>
+                            <kbd>⌘K</kbd>
+                        </button>
+
+                        <!-- Tombol Analitik Header -->
+                        <button class="header-btn btn-analytics-header" id="headerAnalyticsBtn" title="Analitik Produktivitas (A)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                <path d="M18 20V10" />
+                                <path d="M12 20V4" />
+                                <path d="M6 20v-6" />
+                            </svg>
+                            <span class="header-btn-text">Analitik</span>
+                        </button>
+
+                        <!-- Pusat Notifikasi Cerdas & Popover -->
+                        <div class="notif-bell-wrapper" id="notifBellWrapper">
+                            <button class="header-btn btn-notif-bell" id="notifBellBtn" title="Pusat Notifikasi (N)" aria-haspopup="true" aria-expanded="false">
+                                <svg class="bell-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                                </svg>
+                                <span class="header-btn-text">Notifikasi</span>
+                                <span class="notif-badge" id="notifBadge" style="display: none;">0</span>
+                            </button>
+
+                            <!-- Pusat Notifikasi Popover -->
+                            <div class="notif-popover" id="notifPopover" aria-hidden="true">
+                                <div class="notif-header">
+                                    <div class="notif-header-left">
+                                        <div class="notif-title-row">
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                                            </svg>
+                                            <h4>Pusat Notifikasi</h4>
+                                        </div>
+                                        <span class="notif-unread-pill" id="notifUnreadPill">0 Baru</span>
+                                    </div>
+                                    <div class="notif-header-actions">
+                                        <button type="button" class="btn-notif-action" id="markAllReadBtn" title="Tandai semua notifikasi telah dibaca">
+                                            ✓ Tandai Dibaca
+                                        </button>
+                                        <button type="button" class="btn-notif-clear" id="clearNotifBtn" title="Bersihkan semua riwayat notifikasi">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Filter Tabs -->
+                                <div class="notif-tabs" id="notifTabs">
+                                    <button type="button" class="notif-tab active" data-tab="all">Semua</button>
+                                    <button type="button" class="notif-tab" data-tab="unread">Belum Dibaca</button>
+                                    <button type="button" class="notif-tab" data-tab="deadline">Tenggat Waktu</button>
+                                </div>
+
+                                <!-- Notification List -->
+                                <div class="notif-list" id="notifList">
+                                    <!-- Rendered dynamically -->
+                                </div>
+
+                                <!-- Footer Action (FOR LIVE PRESENTATION DEMO) -->
+                                <div class="notif-footer">
+                                    <button type="button" class="btn-simulate-deadline" id="btnSimulateDeadline" title="Uji coba pengingat tenggat waktu langsung saat demo">
+                                        <span class="sim-icon">⚡</span>
+                                        <span>Simulasi Pengingat Deadline</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- View Toggle -->
+                        <button class="header-btn" id="viewToggle" title="Tampilan Ringkas / Detail">
+                            <svg class="icon-detailed" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                <rect x="3" y="3" width="7" height="7" />
+                                <rect x="14" y="3" width="7" height="7" />
+                                <rect x="3" y="14" width="7" height="7" />
+                                <rect x="14" y="14" width="7" height="7" />
+                            </svg>
+                            <svg class="icon-compact" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                <line x1="3" y1="6" x2="21" y2="6" />
+                                <line x1="3" y1="12" x2="21" y2="12" />
+                                <line x1="3" y1="18" x2="21" y2="18" />
+                            </svg>
+                        </button>
+
+                        <!-- Reset Data Demo -->
+                        <button class="header-btn btn-reset" id="resetBtn" title="Reset data demo ke SQLite">Reset
+                            Data</button>
+
+                        <!-- New Task Primary 3D Button -->
+                        <button class="btn-primary" id="newTaskBtn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" stroke-linecap="round">
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                            Tambah Tugas
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Floating Filter Bar Island -->
+                <div class="filter-bar filter-island">
+                    <div class="filter-group">
+                        <span class="filter-label">Prioritas</span>
+                        <div class="filter-pills" id="priorityFilters">
+                            <button class="filter-pill active" data-priority="all">Semua</button>
+                            <button class="filter-pill" data-priority="tinggi"><span
+                                    class="priority-dot dot-tinggi"></span>Tinggi</button>
+                            <button class="filter-pill" data-priority="sedang"><span
+                                    class="priority-dot dot-sedang"></span>Sedang</button>
+                            <button class="filter-pill" data-priority="rendah"><span
+                                    class="priority-dot dot-rendah"></span>Rendah</button>
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <span class="filter-label">Kategori</span>
+                        <div class="filter-pills" id="categoryFilters">
+                            <button class="filter-pill active" data-category="all">Semua</button>
+                            <button class="filter-pill" data-category="Koding">Koding</button>
+                            <button class="filter-pill" data-category="Sekolah">Sekolah</button>
+                            <button class="filter-pill" data-category="Desain">Desain</button>
+                            <button class="filter-pill" data-category="Pribadi">Pribadi</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sunken Kanban Board Canvas -->
+                <main class="board" id="board"></main>
+
+            </div>
+        </div>
+
+        <!-- ═══ WELCOME TOAST ═══ -->
+        <div class="welcome-toast" id="welcomeToast">
+            <div class="welcome-avatar" id="toastAvatar">B</div>
+            <div class="welcome-text">
+                <strong id="toastTitle">Selamat datang!</strong>
+                <span id="toastSubtitle">Siap menyelesaikan target hari ini?</span>
+            </div>
+        </div>
+
+        <!-- ═══ 3D TACTILE TOAST NOTIFICATION STACK ═══ -->
+        <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+        <!-- ═══ FOCUS BAR (BOTTOM DOCK) ═══ -->
         <div class="focus-bar" id="focusBar">
             <div class="focus-task-info">
+                <span class="focus-bar-tag">Mode Fokus Aktif</span>
                 <span class="focus-task-id" id="focusTaskId"></span>
                 <span class="focus-task-title" id="focusTaskTitle"></span>
             </div>
             <div class="focus-timer-section">
                 <span class="focus-timer" id="focusTimerDisplay">25:00</span>
                 <div class="focus-controls">
-                    <button class="focus-btn" id="focusStart" title="Start">▶</button>
-                    <button class="focus-btn" id="focusPause" title="Pause">⏸</button>
-                    <button class="focus-btn" id="focusReset" title="Reset">↺</button>
+                    <button class="focus-btn" id="focusStart" title="Mulai Fokus">▶</button>
+                    <button class="focus-btn" id="focusPause" title="Jeda">⏸</button>
+                    <button class="focus-btn" id="focusReset" title="Reset Waktu">↺</button>
                 </div>
             </div>
             <div class="focus-logged">
-                <span class="focus-logged-label">Logged</span>
-                <span class="focus-logged-value" id="focusSpent">0m</span>
+                <span class="focus-logged-label">Tercatat:</span>
+                <span class="focus-logged-value" id="focusSpent">0 mnt</span>
             </div>
-            <button class="focus-close" id="focusClose" title="Close">✕</button>
+            <!-- Tombol Zen Mode Layar Penuh -->
+            <button class="focus-btn btn-zen" id="zenModeBtn" title="Buka Mode Zen Layar Penuh (Z)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round">
+                    <polyline points="15 3 21 3 21 9" />
+                    <polyline points="9 21 3 21 3 15" />
+                    <line x1="21" y1="3" x2="14" y2="10" />
+                    <line x1="3" y1="21" x2="10" y2="14" />
+                </svg>
+                <span>Mode Zen</span>
+            </button>
+            <button class="focus-close" id="focusClose" title="Tutup mode fokus">✕</button>
+        </div>
+
+        <!-- ═══ FULL-SCREEN ZEN FOCUS STUDIO ═══ -->
+        <div class="zen-studio" id="zenStudio">
+            <div class="zen-header">
+                <div class="zen-task-badge-wrap">
+                    <span class="zen-task-code" id="zenTaskCode">TGS-101</span>
+                    <span class="zen-task-cat" id="zenTaskCategory">Koding</span>
+                    <span class="zen-task-prio" id="zenTaskPriority">Sedang</span>
+                </div>
+                <!-- Ambient Brown Noise Audio Generator -->
+                <div class="zen-ambient-wrap">
+                    <button class="zen-ambient-btn" id="zenAmbientToggle"
+                        title="Nyalakan/Matikan Suara Latar Brown Noise">
+                        <span class="ambient-wave-icon">〰</span>
+                        <span id="zenAmbientText">Suara Hujan: Mati</span>
+                    </button>
+                    <div class="zen-volume-wrap">
+                        <span class="zen-vol-icon">🔉</span>
+                        <input type="range" id="zenVolumeSlider" min="0" max="100" value="40"
+                            title="Volume Suara Latar">
+                    </div>
+                </div>
+                <button class="zen-close-btn" id="zenCloseBtn" title="Keluar dari Mode Zen (Esc)">✕ Keluar</button>
+            </div>
+
+            <div class="zen-content">
+                <div class="zen-timer-wrap">
+                    <div class="zen-svg-ring-container">
+                        <svg class="zen-ring-svg" width="320" height="320" viewBox="0 0 320 320">
+                            <circle class="zen-ring-bg" cx="160" cy="160" r="140" stroke-width="7" fill="transparent" />
+                            <circle class="zen-ring-progress" id="zenRingProgress" cx="160" cy="160" r="140"
+                                stroke-width="7" fill="transparent" stroke-linecap="round" />
+                        </svg>
+                        <div class="zen-timer-inner">
+                            <span class="zen-time-display" id="zenTimerDisplay">25:00</span>
+                            <span class="zen-logged-label" id="zenLoggedTime">⏱ Tercatat: 0 mnt</span>
+                        </div>
+                    </div>
+
+                    <h1 class="zen-task-title" id="zenTaskTitle">Judul Tugas</h1>
+                    <p class="zen-task-desc" id="zenTaskDesc"></p>
+
+                    <div class="zen-controls">
+                        <button class="zen-btn zen-btn-primary" id="zenStartBtn">▶ Mulai Fokus</button>
+                        <button class="zen-btn zen-btn-secondary" id="zenPauseBtn">⏸ Jeda</button>
+                        <button class="zen-btn zen-btn-secondary" id="zenResetBtn">↺ Reset</button>
+                    </div>
+                </div>
+
+                <div class="zen-subtasks-card" id="zenSubtasksCard">
+                    <div class="zen-subtasks-header">
+                        <h3>Sub-tugas Aktif</h3>
+                        <span class="zen-subtasks-counter" id="zenSubtasksCounter">0/0 selesai</span>
+                    </div>
+                    <div class="zen-subtasks-list" id="zenSubtasksList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ STATISTIK & ANALITIK DRAWER ═══ -->
+        <div class="analytics-overlay" id="analyticsOverlay">
+            <div class="analytics-drawer" id="analyticsDrawer">
+                <div class="analytics-header">
+                    <div>
+                        <h2>📊 Analitik Produktivitas</h2>
+                        <p class="analytics-subtitle">Data langsung tersinkronisasi dari SQLite (flowstate.sqlite)</p>
+                    </div>
+                    <button class="drawer-close" id="analyticsCloseBtn" title="Tutup (Esc)">✕</button>
+                </div>
+
+                <div class="analytics-body">
+                    <!-- Skor Produktivitas Radial Gauge -->
+                    <div class="metric-card score-card">
+                        <div class="score-left">
+                            <span class="metric-eyebrow">Skor Produktivitas Harian</span>
+                            <h3 class="score-verdict" id="analyticsScoreVerdict">Memulai...</h3>
+                            <p class="score-desc" id="analyticsScoreDesc">Berdasarkan rasio penyelesaian tugas, progres
+                                sub-tugas, dan sesi fokus hari ini.</p>
+                        </div>
+                        <div class="gauge-container">
+                            <svg width="116" height="116" viewBox="0 0 116 116">
+                                <circle class="gauge-bg" cx="58" cy="58" r="48" stroke-width="8" fill="transparent" />
+                                <circle class="gauge-progress" id="analyticsGaugeFill" cx="58" cy="58" r="48"
+                                    stroke-width="8" fill="transparent" stroke-linecap="round" />
+                            </svg>
+                            <div class="gauge-text">
+                                <span class="gauge-number" id="analyticsScoreNumber">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Estimasi vs Waktu Fokus Aktual -->
+                    <div class="metric-card">
+                        <div class="metric-card-header">
+                            <h4>⏱ Estimasi vs Waktu Fokus Aktual</h4>
+                        </div>
+                        <div class="time-compare-grid">
+                            <div class="time-stat-box">
+                                <span class="time-stat-label">Total Estimasi Rencana</span>
+                                <span class="time-stat-val" id="analyticsEstTime">0 mnt</span>
+                            </div>
+                            <div class="time-stat-box focused">
+                                <span class="time-stat-label">Total Fokus Tercatat</span>
+                                <span class="time-stat-val" id="analyticsFocTime">0 mnt</span>
+                            </div>
+                        </div>
+                        <div class="time-bar-wrap">
+                            <div class="time-bar-track">
+                                <div class="time-bar-fill" id="analyticsTimeBarFill"></div>
+                            </div>
+                            <span class="time-bar-caption" id="analyticsTimeCaption">Rasio realisasi fokus: 0%</span>
+                        </div>
+                    </div>
+
+                    <!-- Distribusi Berdasarkan Kategori -->
+                    <div class="metric-card">
+                        <div class="metric-card-header">
+                            <h4>📁 Distribusi Tugas per Kategori</h4>
+                            <span class="metric-count-badge" id="analyticsTotalCatTasks">0 Tugas</span>
+                        </div>
+                        <div class="dist-list" id="analyticsCategoryList"></div>
+                    </div>
+
+                    <!-- Distribusi Berdasarkan Prioritas -->
+                    <div class="metric-card">
+                        <div class="metric-card-header">
+                            <h4>⚡ Distribusi Berdasarkan Prioritas</h4>
+                        </div>
+                        <div class="dist-list" id="analyticsPriorityList"></div>
+                    </div>
+
+                    <!-- Ekspor & Cetak Laporan -->
+                    <div class="metric-card export-card">
+                        <div class="metric-card-header">
+                            <h4>📑 Ekspor Laporan Evaluasi</h4>
+                        </div>
+                        <p class="export-desc">Unduh berkas spreadsheet CSV atau cetak ringkasan tugas untuk kebutuhan
+                            evaluasi guru / bootcamp.</p>
+                        <div class="export-actions">
+                            <button class="btn-export-csv" id="exportCsvBtn">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                    <polyline points="7 10 12 15 17 10" />
+                                    <line x1="12" y1="15" x2="12" y2="3" />
+                                </svg>
+                                Ekspor Laporan (.CSV)
+                            </button>
+                            <button class="btn-print-summary" id="printReportBtn">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round">
+                                    <polyline points="6 9 6 2 18 2 18 9" />
+                                    <path
+                                        d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                                    <rect x="6" y="14" width="12" height="8" />
+                                </svg>
+                                Cetak Ringkasan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ PANDUAN PINTASAN PAPAN KETIK (KEYBOARD SHORTCUTS) ═══ -->
+        <div class="help-overlay" id="helpOverlay">
+            <div class="help-modal" id="helpModal">
+                <div class="help-header">
+                    <h3>⌨ Pintasan Papan Ketik (Keyboard Shortcuts)</h3>
+                    <button class="help-close" id="helpCloseBtn">✕</button>
+                </div>
+                <div class="help-grid">
+                    <div class="help-row">
+                        <div class="help-keys"><kbd>⌘</kbd> + <kbd>K</kbd> / <kbd>Ctrl</kbd> + <kbd>K</kbd></div>
+                        <span>Cari tugas berdasarkan judul atau kode ID</span>
+                    </div>
+                    <div class="help-row">
+                        <div class="help-keys"><kbd>N</kbd></div><span>Buka / Tutup Pusat Notifikasi Cerdas</span>
+                    </div>
+                    <div class="help-row">
+                        <div class="help-keys"><kbd>T</kbd></div><span>Tambah tugas baru ke papan Kanban</span>
+                    </div>
+                    <div class="help-row">
+                        <div class="help-keys"><kbd>A</kbd></div><span>Buka panel Analitik Produktivitas</span>
+                    </div>
+                    <div class="help-row">
+                        <div class="help-keys"><kbd>Z</kbd></div><span>Buka / Tutup Mode Zen Layar Penuh</span>
+                    </div>
+                    <div class="help-row">
+                        <div class="help-keys"><kbd>S</kbd></div><span>Aktifkan / Matikan efek suara sintetis</span>
+                    </div>
+                    <div class="help-row">
+                        <div class="help-keys"><kbd>D</kbd></div><span>Ganti mode tampilan (Gelap / Terang)</span>
+                    </div>
+                    <div class="help-row">
+                        <div class="help-keys"><kbd>Esc</kbd></div><span>Tutup modal, drawer, atau keluar dari Mode
+                            Zen</span>
+                    </div>
+                    <div class="help-row">
+                        <div class="help-keys"><kbd>?</kbd></div><span>Tampilkan panduan pintasan ini</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- ═══ COMMAND PALETTE ═══ -->
@@ -159,7 +809,7 @@
                         <circle cx="11" cy="11" r="8" />
                         <line x1="21" y1="21" x2="16.65" y2="16.65" />
                     </svg>
-                    <input type="text" id="commandInput" placeholder="Search tasks by title or ID…" autocomplete="off"
+                    <input type="text" id="commandInput" placeholder="Cari tugas atau ID... (Ctrl+K)" autocomplete="off"
                         spellcheck="false">
                     <kbd>Esc</kbd>
                 </div>
@@ -171,69 +821,70 @@
         <div class="drawer-overlay" id="drawerOverlay">
             <div class="drawer" id="drawer">
                 <div class="drawer-header">
-                    <h2 id="drawerTitle">New Task</h2>
-                    <button class="drawer-close" id="drawerClose">✕</button>
+                    <h2 id="drawerTitle">Tambah Tugas</h2>
+                    <button class="drawer-close" id="drawerClose" title="Tutup (Esc)">✕</button>
                 </div>
                 <form class="drawer-form" id="taskForm" autocomplete="off">
                     <div class="form-group">
-                        <label for="taskTitleInput">Title</label>
-                        <input type="text" id="taskTitleInput" placeholder="What needs to be done?" required>
+                        <label for="taskTitleInput">Judul Tugas</label>
+                        <input type="text" id="taskTitleInput" placeholder="Apa yang perlu dikerjakan?" required>
                     </div>
                     <div class="form-group">
-                        <label for="taskDescInput">Description</label>
-                        <textarea id="taskDescInput" rows="3" placeholder="Add details…"></textarea>
+                        <label for="taskDescInput">Deskripsi</label>
+                        <textarea id="taskDescInput" rows="3"
+                            placeholder="Tambahkan catatan atau detail tugas..."></textarea>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="taskPriorityInput">Priority</label>
+                            <label for="taskPriorityInput">Prioritas</label>
                             <select id="taskPriorityInput">
-                                <option value="low">Low</option>
-                                <option value="medium" selected>Medium</option>
-                                <option value="high">High</option>
+                                <option value="rendah">Rendah</option>
+                                <option value="sedang" selected>Sedang</option>
+                                <option value="tinggi">Tinggi</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="taskCategoryInput">Category</label>
+                            <label for="taskCategoryInput">Kategori</label>
                             <select id="taskCategoryInput">
-                                <option value="Dev">Dev</option>
-                                <option value="Design">Design</option>
-                                <option value="Study">Study</option>
-                                <option value="Personal">Personal</option>
+                                <option value="Koding">Koding</option>
+                                <option value="Sekolah">Sekolah</option>
+                                <option value="Desain">Desain</option>
+                                <option value="Pribadi">Pribadi</option>
                             </select>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="taskDueInput">Due Date</label>
+                            <label for="taskDueInput">Tenggat Waktu</label>
                             <input type="date" id="taskDueInput">
                         </div>
                         <div class="form-group">
-                            <label for="taskEstimateInput">Estimate (min)</label>
+                            <label for="taskEstimateInput">Estimasi (menit)</label>
                             <input type="number" id="taskEstimateInput" min="0" step="5" placeholder="45">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="taskColumnInput">Column</label>
+                        <label for="taskColumnInput">Kolom</label>
                         <select id="taskColumnInput">
-                            <option value="inbox">Inbox</option>
-                            <option value="today">Today</option>
-                            <option value="in-progress">In Progress</option>
-                            <option value="completed">Completed</option>
+                            <option value="inbox">Kotak Masuk</option>
+                            <option value="today">Hari Ini</option>
+                            <option value="in_progress">Sedang Dikerjakan</option>
+                            <option value="completed">Selesai</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Sub-tasks</label>
+                        <label>Sub-tugas</label>
                         <div class="subtask-list" id="subtaskList"></div>
                         <div class="subtask-add">
-                            <input type="text" id="subtaskInput" placeholder="Add a sub-task…">
-                            <button type="button" id="addSubtaskBtn" class="btn-sm">Add</button>
+                            <input type="text" id="subtaskInput" placeholder="Tambah sub-tugas baru...">
+                            <button type="button" id="addSubtaskBtn" class="btn-sm">Tambah</button>
                         </div>
                     </div>
                     <div class="drawer-actions">
-                        <button type="button" class="btn-danger" id="deleteTaskBtn">Delete</button>
+                        <button type="button" class="btn-danger" id="deleteTaskBtn">Hapus Tugas</button>
                         <div class="drawer-actions-right">
-                            <button type="button" class="btn-secondary" id="cancelBtn">Cancel</button>
-                            <button type="submit" class="btn-primary">Save Task</button>
+                            <button type="button" class="btn-secondary" id="cancelBtn">Batal</button>
+                            <button type="submit" class="btn-primary">Simpan Tugas</button>
                         </div>
                     </div>
                 </form>
@@ -242,7 +893,9 @@
 
     </div>
 
+    <!-- Scripts: SortableJS + Canvas Confetti + App -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js"></script>
     <script src="app.js"></script>
 </body>
 
