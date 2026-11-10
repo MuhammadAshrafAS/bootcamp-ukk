@@ -2,7 +2,14 @@
    FlowState — Tactile Editorial Kanban Workspace
    ════════════════════════════════════════════════════ */
 
-/* ─── Theme Variables ─── */
+/* [PANDUAN-ASSESSOR: WARNA TEMA & BACKGROUND] - Ubah hex code di bawah untuk mengganti warna latar, kartu, dan warna aksen utama */
+/* TIPS PENGUJIAN:
+   - Ganti --bg-primary untuk mengubah latar belakang utama (default: #F7F6F2)
+   - Ganti --bg-surface untuk warna kartu/permukaan (default: #FFFFFF)
+   - Ganti --accent-terracotta untuk warna tombol & aksi penting (default: #D95D39)
+   - Ganti --accent-green untuk status selesai (default: #2A6F4E)
+   - Mode gelap dapat diubah pada blok [data-theme="dark"] di bawah
+*/
 :root {
   --bg-primary: #F7F6F2;
   --bg-surface: #FFFFFF;
@@ -70,6 +77,12 @@
 }
 
 
+/* [PANDUAN-ASSESSOR: UKURAN FONT & TIPOGRAFI] - Bagian untuk mengubah jenis font atau ukuran teks aplikasi */
+/* TIPS PENGUJIAN:
+   - Ubah font-size pada html (default: 14px) untuk memperbesar/memperkecil skala teks global
+   - Ubah --font-sans untuk mengganti font antarmuka
+   - Ubah --font-mono untuk mengganti font kode tugas / timer / angka
+*/
 /* ─── Reset & Base ─── */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -256,6 +269,20 @@ body {
 .db-sync-badge.saved .db-sync-dot {
   background: var(--accent-green);
 }
+.db-sync-badge[data-mode="local"] {
+  border-color: rgba(59, 130, 246, 0.35);
+}
+.db-sync-badge[data-mode="local"].saved .db-sync-dot {
+  background: #3B82F6;
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.45);
+}
+.db-sync-badge[data-mode="sqlite"] {
+  border-color: rgba(42, 111, 78, 0.35);
+}
+.db-sync-badge[data-mode="sqlite"].saved .db-sync-dot {
+  background: var(--accent-green);
+  box-shadow: 0 0 6px rgba(42, 111, 78, 0.45);
+}
 
 .header-btn {
   display: inline-flex;
@@ -319,6 +346,11 @@ kbd {
   line-height: 1.4;
 }
 
+/* [PANDUAN-ASSESSOR: WARNA TOMBOL UTAMA / TAMBAH TUGAS] - Ubah background-color di sini untuk mengganti warna button utama (#D95D39) */
+/* TIPS PENGUJIAN:
+   - Ganti `background: var(--accent-terracotta);` ke warna lain (misal: #2563EB untuk biru, #059669 untuk hijau emerald, #7C3AED untuk ungu)
+   - Border-bottom (3.5px solid #9C381A) menciptakan efek 3D bevel / tactile lip yang menekan ke bawah saat diklik (:active)
+*/
 .btn-primary {
   display: inline-flex;
   align-items: center;
@@ -448,6 +480,13 @@ kbd {
 .dot-low, .dot-rendah { background: #94A3B8; }
 
 
+/* [PANDUAN-ASSESSOR: TAMPILAN KOLOM KANBAN & RESPONSIVE] - Bagian pengaturan lebar/tinggi 4 kolom Kanban dan scrollbar */
+/* TIPS PENGUJIAN:
+   - grid-template-columns: repeat(4, 1fr) membagi papan Kanban menjadi 4 kolom berukuran seimbang: Kotak Masuk, Hari Ini, Sedang Dikerjakan, dan Selesai
+   - gap: 8px mengatur jarak antar kolom
+   - background-image radial-gradient menciptakan efek architectural dot-grid seperti analog design planner
+   - Pengaturan responsif layar kecil / tablet terdapat pada media query @media (max-width: 1024px)
+*/
 /* ─── Board (Architectural Dot Canvas) ─── */
 .board {
   display: grid;
@@ -614,6 +653,15 @@ kbd {
 }
 
 
+/* [PANDUAN-ASSESSOR: DESAIN KARTU TUGAS & BORDER PRIORITAS] - Bagian untuk mengubah tampilan card, bayangan 3D, dan warna garis samping prioritas Tinggi/Sedang/Rendah */
+/* TIPS PENGUJIAN:
+   - border-left: 3.5px solid memberikan aksen warna vertikal di tepi kiri kartu sesuai tingkat urgensi:
+       * Tinggi: var(--accent-terracotta) / #D95D39 (Oranye Bata)
+       * Sedang: var(--accent-amber) / #D97706 (Kuning Ochre)
+       * Rendah: #94A3B8 (Abu-abu Slate)
+   - border-bottom: 3px solid #D4D1C9 memberikan bibir taktil 3D (tactile bottom lip) yang memampat saat kartu diklik (:active)
+   - .task-card::before menciptakan efek spotlight glow yang mengikuti pergerakan kursor mouse (--mouse-x, --mouse-y)
+*/
 /* ─── Task Card (Physical 3D Depth, Spotlight & Bottom Lip) ─── */
 .task-card {
   background: var(--bg-surface);

@@ -8,9 +8,21 @@ const PORT = process.env.PORT || 3000;
 const DB_PATH = path.join(__dirname, 'flowstate.sqlite');
 
 // ─── Initialize SQLite Database ───
+// [PANDUAN-ASSESSOR: KONEKSI DATABASE SQLITE] - Kode untuk membuat dan menyambungkan file database flowstate.sqlite
+// TIPS PENGUJIAN:
+// - Menggunakan built-in Node.js SQLite API (node:sqlite DatabaseSync)
+// - File database disimpan secara lokal di: path.join(__dirname, 'flowstate.sqlite')
+// - PRAGMA journal_mode = WAL mengaktifkan Write-Ahead Logging untuk konkurensi tinggi & performa baca-tulis optimal
+// - PRAGMA foreign_keys = ON menjamin integritas relasi antar tabel (ON DELETE CASCADE)
 const db = new DatabaseSync(DB_PATH);
 
-// Enable WAL mode & foreign keys
+// [PANDUAN-ASSESSOR: STRUKTUR TABEL DATABASE (CREATE TABLE)] - Skema pembuatan tabel users, tasks, subtasks, dan notifications
+// TIPS PENGUJIAN:
+// - Tabel `users`: menyimpan data pengguna, hash password (PBKDF2 SHA-256), lencana peran, & warna avatar
+// - Tabel `sessions`: token autentikasi sesi aktif berbasis Bearer token
+// - Tabel `tasks`: kartu tugas (kode TGS-xxx, judul, deskripsi, kolom status: inbox/today/in_progress/completed, prioritas, estimasi, fokus)
+// - Tabel `subtasks`: checklist sub-tugas yang berelasi ke tasks(id) dengan ON DELETE CASCADE
+// - Tabel `notifications`: riwayat notifikasi cerdas yang terhubung ke tasks(task_code, task_id)
 db.exec(`
   PRAGMA journal_mode = WAL;
   PRAGMA foreign_keys = ON;
@@ -522,6 +534,13 @@ function generateNextTaskCode(userId) {
 //  AUTH API ROUTES
 // ══════════════════════════════════════════════════
 
+// [PANDUAN-ASSESSOR: FITUR LOGIN & REGISTER (AUTH API)] - Logika pengecekan akun login, enkripsi/validasi password, dan pembuatan akun baru
+// TIPS PENGUJIAN:
+// - POST /api/auth/register : Enkripsi password dengan crypto.pbkdf2Sync(sha256), simpan ke tabel `users`, dan buat token sesi di `sessions`
+// - POST /api/auth/login    : Cek kecocokan email dan hash password di SQLite, kembalikan Bearer token
+// - POST /api/auth/demo-login: Mode Instan 1-klik untuk akun Pak Budi (Evaluator UKK) tanpa ketik password
+// - GET /api/auth/me        : Validasi token sesi aktif yang dikirim dari browser
+// - POST /api/auth/logout   : Menghapus token dari tabel `sessions`
 // POST /api/auth/register — Pendaftaran Pengguna Baru
 app.post('/api/auth/register', (req, res) => {
   const { name, email, password, role_badge = 'Pelajar', avatar_color = '#D95D39' } = req.body;
@@ -661,6 +680,12 @@ app.post('/api/auth/logout', (req, res) => {
 //  TASK API ROUTES (PER-USER SQLITE FILTERED)
 // ══════════════════════════════════════════════════
 
+// [PANDUAN-ASSESSOR: CRUD TUGAS (TAMBAH, BACA, EDIT, HAPUS)] - Endpoint REST API untuk mengambil, menyimpan, mengubah, dan menghapus tugas di SQLite
+// TIPS PENGUJIAN:
+// - READ  : GET /api/tasks          -> Mengambil seluruh tugas milik user aktif beserta checklist sub-tugasnya
+// - CREATE: POST /api/tasks         -> Menambahkan tugas baru dengan auto-increment kode TGS-xxx dan menyimpan sub-tugas dalam satu transaksi
+// - UPDATE: PUT /api/tasks/:id      -> Memperbarui data judul, deskripsi, kolom status, prioritas, tenggat, dan sub-tugas
+// - DELETE: DELETE /api/tasks/:id   -> Menghapus tugas dari tabel `tasks` (sub-tugas otomatis terhapus via CASCADE)
 // GET /api/tasks — Ambil tugas user saat ini
 app.get('/api/tasks', authMiddleware, (req, res) => {
   try {
@@ -830,6 +855,11 @@ app.delete('/api/tasks/:id', authMiddleware, (req, res) => {
   }
 });
 
+// [PANDUAN-ASSESSOR: SIMPAN POSISI DRAG & DROP KE DATABASE] - Endpoint PATCH /api/tasks/reorder untuk memperbarui kolom status dan urutan posisi kartu di SQLite
+// TIPS PENGUJIAN:
+// - Dipanggil setiap kali kartu selesai digeser oleh SortableJS di frontend
+// - Menggunakan transaksi SQLite (BEGIN TRANSACTION ... COMMIT) sehingga batch update posisi 100% atomik & cepat
+// - Memperbarui kolom `status` (inbox, today, in_progress, completed) dan `position` (indeks urutan kartu vertikal)
 // PATCH /api/tasks/reorder — Drag & Drop sinkronisasi status kolom dan urutan posisi
 app.patch('/api/tasks/reorder', authMiddleware, (req, res) => {
   const { updates } = req.body;

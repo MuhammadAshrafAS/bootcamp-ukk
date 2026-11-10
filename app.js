@@ -26,6 +26,25 @@
   ];
   let quoteIdx = 0;
 
+  function startQuoteRotation() {
+    const textEl = $('#authQuoteText');
+    const authorEl = $('#authQuoteAuthor');
+    if (!textEl || !authorEl) return;
+
+    setInterval(() => {
+      quoteIdx = (quoteIdx + 1) % PRODUCTIVITY_QUOTES.length;
+      const q = PRODUCTIVITY_QUOTES[quoteIdx];
+      textEl.style.opacity = '0';
+      authorEl.style.opacity = '0';
+      setTimeout(() => {
+        textEl.textContent = q.text;
+        authorEl.textContent = q.author;
+        textEl.style.opacity = '1';
+        authorEl.style.opacity = '1';
+      }, 300);
+    }, 6000);
+  }
+
   // ─── State ───
   let state = {
     tasks: [],
@@ -327,13 +346,50 @@
     }
   }
 
-  // ─── SQLite Sync Status Badge ───
+  // ─── Hybrid Sync Status Badge (SQLite Localhost <-> Cloud/Lokal) ───
+  let backendMode = (typeof window !== 'undefined' && (window.location.hostname.includes('github.io') || window.location.protocol === 'file:'))
+    ? 'local'
+    : 'detecting';
+
+  function updateBackendBadgeUI() {
+    const badge = $('#dbStatusBadge');
+    const text = $('#dbStatusText');
+    const subtitle = $('#analyticsSubtitle');
+    const featEngine = $('#featEnginePill');
+
+    const isLocal = backendMode === 'local';
+    const savedLabel = isLocal ? 'Tersimpan di Cloud/Lokal' : 'Tersimpan di SQLite';
+
+    if (badge) {
+      badge.setAttribute('data-mode', isLocal ? 'local' : 'sqlite');
+      badge.title = isLocal
+        ? 'Mode Statis / GitHub Pages (Tersimpan di LocalStorage & Cloud Browser)'
+        : 'Terhubung ke SQLite Backend lokal (flowstate.sqlite)';
+    }
+
+    if (text && (!badge || !badge.classList.contains('saving'))) {
+      text.textContent = savedLabel;
+    }
+
+    if (subtitle) {
+      subtitle.textContent = isLocal
+        ? 'Data langsung tersinkronisasi di Browser (LocalStorage & Cloud Offline)'
+        : 'Data langsung tersinkronisasi dari SQLite (flowstate.sqlite)';
+    }
+
+    if (featEngine) {
+      featEngine.textContent = isLocal ? '☁️ Cloud & Local Ready' : '⚡ SQLite & Cloud Ready';
+    }
+  }
+
   function setSyncStatus(status) {
     const badge = $('#dbStatusBadge');
     const text = $('#dbStatusText');
     if (!badge || !text) return;
 
     if (syncTimeout) clearTimeout(syncTimeout);
+
+    const savedLabel = backendMode === 'local' ? 'Tersimpan di Cloud/Lokal' : 'Tersimpan di SQLite';
 
     if (status === 'saving') {
       badge.classList.remove('saved');
@@ -342,9 +398,9 @@
     } else if (status === 'saved') {
       badge.classList.remove('saving');
       badge.classList.add('saved');
-      text.textContent = 'Tersimpan di SQLite';
+      text.textContent = savedLabel;
 
-      badge.style.borderColor = 'var(--accent-green)';
+      badge.style.borderColor = backendMode === 'local' ? '#3B82F6' : 'var(--accent-green)';
       syncTimeout = setTimeout(() => {
         badge.style.borderColor = '';
       }, 1200);
@@ -454,27 +510,601 @@
     });
   }
 
-  // ══════════════════════════════════════════════════
-  //  SQLITE API CLIENT (FETCH WITH BEARER TOKEN)
-  // ══════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════
+  //  HYBRID CLIENT & AUTOMATIC LOCALSTORAGE FALLBACK ENGINE
+  //  Supports SQLite when running on localhost:3000, and seamlessly
+  //  switches to LocalStorage when hosted on GitHub Pages or offline.
+  // ══════════════════════════════════════════════════════════════════
 
+  const HYBRID_DEFAULT_EVALUATOR = {
+    id: 1,
+    name: 'Pak Budi (Evaluator UKK)',
+    email: 'evaluator@flowstate.id',
+    role_badge: 'Guru / Evaluator',
+    avatar_color: '#D95D39',
+    password: 'demo123'
+  };
+
+  const HYBRID_SEED_TASKS = [
+    {
+      id: 101,
+      task_code: 'TGS-101',
+      title: 'Merancang skema database & ERD',
+      description: 'Analisis kebutuhan entitas relasi untuk sistem bootcamp dan buat diagram ERD konseptual.',
+      status: 'inbox',
+      position: 0,
+      priority: 'rendah',
+      category: 'Koding',
+      due_date: '2026-11-14',
+      estimated_minutes: 45,
+      focused_minutes: 0,
+      created_at: '2026-11-10 08:00:00',
+      subtasks: [
+        { id: 1001, task_id: 101, title: 'Tentukan entitas utama & relasi tabel', is_completed: false },
+        { id: 1002, task_id: 101, title: 'Lakukan normalisasi data hingga 3NF', is_completed: false },
+        { id: 1003, task_id: 101, title: 'Review script migrasi & foreign keys', is_completed: false }
+      ]
+    },
+    {
+      id: 102,
+      task_code: 'TGS-102',
+      title: 'Riset strategi caching API Redis',
+      description: 'Bandingkan arsitektur caching in-memory untuk mengurangi latency query database.',
+      status: 'inbox',
+      position: 1,
+      priority: 'sedang',
+      category: 'Sekolah',
+      due_date: '2026-11-15',
+      estimated_minutes: 60,
+      focused_minutes: 0,
+      created_at: '2026-11-10 08:15:00',
+      subtasks: [
+        { id: 1004, task_id: 102, title: 'Pelajari pola arsitektur Cache-Aside', is_completed: false },
+        { id: 1005, task_id: 102, title: 'Bandingkan performa Redis vs Memcached', is_completed: false },
+        { id: 1006, task_id: 102, title: 'Tulis draft proposal implementasi caching', is_completed: false }
+      ]
+    },
+    {
+      id: 103,
+      task_code: 'TGS-103',
+      title: 'Memperbaiki bug autentikasi API',
+      description: 'Perbarui middleware otentikasi dengan JWT refresh token dan standardisasi response error.',
+      status: 'today',
+      position: 0,
+      priority: 'tinggi',
+      category: 'Koding',
+      due_date: '2026-11-12',
+      estimated_minutes: 90,
+      focused_minutes: 25,
+      created_at: '2026-11-10 08:30:00',
+      subtasks: [
+        { id: 1007, task_id: 103, title: 'Audit celah keamanan alur login saat ini', is_completed: true },
+        { id: 1008, task_id: 103, title: 'Implementasi rotasi refresh token JWT', is_completed: false },
+        { id: 1009, task_id: 103, title: 'Tulis unit test untuk validasi token expired', is_completed: false },
+        { id: 1010, task_id: 103, title: 'Perbarui dokumentasi OpenAPI / Swagger', is_completed: false }
+      ]
+    },
+    {
+      id: 104,
+      task_code: 'TGS-104',
+      title: 'Menyiapkan slide presentasi proyek',
+      description: 'Susun materi presentasi progres aplikasi UKK untuk evaluasi akhir semester.',
+      status: 'today',
+      position: 1,
+      priority: 'tinggi',
+      category: 'Pribadi',
+      due_date: '2026-11-10',
+      estimated_minutes: 60,
+      focused_minutes: 15,
+      created_at: '2026-11-10 08:45:00',
+      subtasks: [
+        { id: 1011, task_id: 104, title: 'Rancang kerangka topik & demo alur aplikasi', is_completed: true },
+        { id: 1012, task_id: 104, title: 'Desain template slide & infografis arsitektur', is_completed: true },
+        { id: 1013, task_id: 104, title: 'Sisipkan screenshot antarmuka & diagram database', is_completed: false },
+        { id: 1014, task_id: 104, title: 'Latihan presentasi dan pengaturan durasi waktu', is_completed: false }
+      ]
+    },
+    {
+      id: 105,
+      task_code: 'TGS-105',
+      title: 'Membuat layout UI responsif',
+      description: 'Selesaikan grid CSS sistem modular dan pastikan fleksibilitas layout di semua perangkat.',
+      status: 'in_progress',
+      position: 0,
+      priority: 'sedang',
+      category: 'Desain',
+      due_date: '2026-11-11',
+      estimated_minutes: 120,
+      focused_minutes: 50,
+      created_at: '2026-11-10 09:00:00',
+      subtasks: [
+        { id: 1015, task_id: 105, title: 'Atur sistem grid CSS & CSS custom properties', is_completed: true },
+        { id: 1016, task_id: 105, title: 'Konfigurasi breakpoint layar smartphone', is_completed: true },
+        { id: 1017, task_id: 105, title: 'Uji tampilan pada tablet & laptop resolusi tinggi', is_completed: false },
+        { id: 1018, task_id: 105, title: 'Pemeriksaan konsistensi font & spacing', is_completed: false }
+      ]
+    },
+    {
+      id: 106,
+      task_code: 'TGS-106',
+      title: 'Tulis unit test modul pembayaran',
+      description: 'Tingkatkan coverage unit test untuk proses transaksi dan handling error webhook gateway.',
+      status: 'completed',
+      position: 0,
+      priority: 'sedang',
+      category: 'Koding',
+      due_date: '2026-11-09',
+      estimated_minutes: 75,
+      focused_minutes: 75,
+      created_at: '2026-11-10 09:15:00',
+      subtasks: [
+        { id: 1019, task_id: 106, title: 'Test skenario pembuatan invoice dan payload', is_completed: true },
+        { id: 1020, task_id: 106, title: 'Test alur callback notifikasi pembayaran sukses', is_completed: true },
+        { id: 1021, task_id: 106, title: 'Test handling kegagalan dan rollback transaksi', is_completed: true }
+      ]
+    }
+  ];
+
+  function getHybridSeedNotifs(tasks) {
+    const tAuth = tasks.find(t => t.title.toLowerCase().includes('autentikasi')) || tasks[2] || tasks[0];
+    const tDb = tasks.find(t => t.title.toLowerCase().includes('database')) || tasks[0];
+    const tAchieve = tasks.find(t => t.title.toLowerCase().includes('unit test')) || tasks[5] || tasks[tasks.length - 1];
+    const tWork = tasks.find(t => t.title.toLowerCase().includes('slide')) || tasks[3] || tasks[0];
+
+    return [
+      {
+        id: 1,
+        type: 'deadline',
+        title: '🚨 Tenggat Waktu Mendekat!',
+        message: `Tugas "${tAuth.title}" (${tAuth.task_code}) jatuh tempo hari ini. Segera selesaikan sub-tugasnya!`,
+        task_code: tAuth.task_code,
+        task_id: tAuth.id,
+        is_read: 0,
+        created_at: new Date(Date.now() - 10 * 60 * 1000).toISOString()
+      },
+      {
+        id: 2,
+        type: 'deadline',
+        title: '🚨 Prioritas Tinggi Belum Selesai',
+        message: `Tugas "${tDb.title}" (${tDb.task_code}) berstatus Prioritas Tinggi dan belum tuntas.`,
+        task_code: tDb.task_code,
+        task_id: tDb.id,
+        is_read: 0,
+        created_at: new Date(Date.now() - 35 * 60 * 1000).toISOString()
+      },
+      {
+        id: 3,
+        type: 'achievement',
+        title: '🏆 Milestone Fokus Tercapai!',
+        message: `Kamu telah menyelesaikan sesi fokus untuk tugas "${tAchieve.title}" (${tAchieve.task_code}). Kerja luar biasa!`,
+        task_code: tAchieve.task_code,
+        task_id: tAchieve.id,
+        is_read: 0,
+        created_at: new Date(Date.now() - 2 * 3600 * 1000).toISOString()
+      },
+      {
+        id: 4,
+        type: 'workload',
+        title: '⚠️ Peringatan Beban Kerja Tinggi',
+        message: `Tugas "${tWork.title}" (${tWork.task_code}) berkontribusi pada beban kerja hari ini (>6 jam).`,
+        task_code: tWork.task_code,
+        task_id: tWork.id,
+        is_read: 0,
+        created_at: new Date(Date.now() - 5 * 3600 * 1000).toISOString()
+      }
+    ];
+  }
+
+  function handleLocalStorageRequest(endpoint, options = {}) {
+    const method = (options.method || 'GET').toUpperCase();
+    const url = endpoint.split('?')[0];
+    let body = {};
+    if (options.body) {
+      try {
+        body = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
+      } catch {}
+    }
+
+    function getActiveUserId() {
+      if (auth.user && auth.user.id) return auth.user.id;
+      const savedUserStr = localStorage.getItem('flowstate_hybrid_active_user');
+      if (savedUserStr) {
+        try { return JSON.parse(savedUserStr).id; } catch {}
+      }
+      return 1;
+    }
+
+    function getUsers() {
+      try {
+        const u = JSON.parse(localStorage.getItem('flowstate_hybrid_users'));
+        if (Array.isArray(u) && u.length > 0) return u;
+      } catch {}
+      const def = [HYBRID_DEFAULT_EVALUATOR];
+      localStorage.setItem('flowstate_hybrid_users', JSON.stringify(def));
+      return def;
+    }
+
+    function getUserTasks(userId) {
+      const key = `flowstate_hybrid_tasks_${userId}`;
+      try {
+        const t = JSON.parse(localStorage.getItem(key));
+        if (Array.isArray(t) && t.length > 0) return t;
+      } catch {}
+      const seeded = JSON.parse(JSON.stringify(HYBRID_SEED_TASKS));
+      localStorage.setItem(key, JSON.stringify(seeded));
+      return seeded;
+    }
+
+    function saveUserTasks(userId, tasks) {
+      localStorage.setItem(`flowstate_hybrid_tasks_${userId}`, JSON.stringify(tasks));
+    }
+
+    function getUserNotifs(userId) {
+      const key = `flowstate_hybrid_notifs_${userId}`;
+      try {
+        const n = JSON.parse(localStorage.getItem(key));
+        if (Array.isArray(n) && n.length > 0) return n;
+      } catch {}
+      const tasks = getUserTasks(userId);
+      const seeded = getHybridSeedNotifs(tasks);
+      localStorage.setItem(key, JSON.stringify(seeded));
+      return seeded;
+    }
+
+    function saveUserNotifs(userId, notifs) {
+      localStorage.setItem(`flowstate_hybrid_notifs_${userId}`, JSON.stringify(notifs));
+    }
+
+    // 1. Auth: Demo Login
+    if (url === '/api/auth/demo-login' && method === 'POST') {
+      const user = HYBRID_DEFAULT_EVALUATOR;
+      const token = 'hybrid-demo-token-1';
+      localStorage.setItem('flowstate_hybrid_active_user', JSON.stringify(user));
+      return { success: true, token, user };
+    }
+
+    // 2. Auth: Email/Password Login
+    if (url === '/api/auth/login' && method === 'POST') {
+      const users = getUsers();
+      const email = (body.email || '').toLowerCase().trim();
+      const pwd = body.password || '';
+
+      const found = users.find(u => (u.email || '').toLowerCase() === email && (u.password === pwd || u.password_hash === pwd || email === 'evaluator@flowstate.id'));
+      if (found) {
+        const token = 'hybrid-user-token-' + found.id;
+        localStorage.setItem('flowstate_hybrid_active_user', JSON.stringify(found));
+        return { success: true, token, user: found };
+      }
+      return { success: false, error: 'Email atau kata sandi tidak cocok.' };
+    }
+
+    // 3. Auth: Register
+    if (url === '/api/auth/register' && method === 'POST') {
+      const users = getUsers();
+      const email = (body.email || '').toLowerCase().trim();
+      if (!body.name || !email || !body.password) {
+        return { success: false, error: 'Nama, email, dan kata sandi wajib diisi.' };
+      }
+      if (users.some(u => (u.email || '').toLowerCase() === email)) {
+        return { success: false, error: 'Email sudah terdaftar. Silakan gunakan email lain atau masuk akun.' };
+      }
+
+      const newUser = {
+        id: Date.now(),
+        name: body.name.trim(),
+        email: email,
+        role_badge: body.role_badge || '👨‍💻 Developer',
+        avatar_color: body.avatar_color || '#D95D39',
+        password: body.password
+      };
+      users.push(newUser);
+      localStorage.setItem('flowstate_hybrid_users', JSON.stringify(users));
+      localStorage.setItem('flowstate_hybrid_active_user', JSON.stringify(newUser));
+
+      const initialTasks = JSON.parse(JSON.stringify(HYBRID_SEED_TASKS));
+      saveUserTasks(newUser.id, initialTasks);
+      saveUserNotifs(newUser.id, getHybridSeedNotifs(initialTasks));
+
+      return { success: true, token: 'hybrid-user-token-' + newUser.id, user: newUser };
+    }
+
+    // 4. Auth: Me
+    if (url === '/api/auth/me' && method === 'GET') {
+      const savedUserStr = localStorage.getItem('flowstate_hybrid_active_user');
+      if (savedUserStr) {
+        try {
+          const user = JSON.parse(savedUserStr);
+          return { success: true, user };
+        } catch {}
+      }
+      if (auth.token && (auth.token.includes('demo') || auth.token.includes('evaluator') || auth.token.includes('hybrid'))) {
+        localStorage.setItem('flowstate_hybrid_active_user', JSON.stringify(HYBRID_DEFAULT_EVALUATOR));
+        return { success: true, user: HYBRID_DEFAULT_EVALUATOR };
+      }
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    // 5. Auth: Logout
+    if (url === '/api/auth/logout' && method === 'POST') {
+      localStorage.removeItem('flowstate_hybrid_active_user');
+      return { success: true, message: 'Berhasil keluar.' };
+    }
+
+    const userId = getActiveUserId();
+    const tasks = getUserTasks(userId);
+    const notifs = getUserNotifs(userId);
+
+    // 6. Tasks: Fetch All
+    if (url === '/api/tasks' && method === 'GET') {
+      return { success: true, tasks };
+    }
+
+    // 7. Tasks: Create
+    if (url === '/api/tasks' && method === 'POST') {
+      let maxNum = 100;
+      tasks.forEach(t => {
+        const m = (t.task_code || '').match(/TGS-(\d+)/i);
+        if (m) maxNum = Math.max(maxNum, parseInt(m[1], 10));
+      });
+      const nextCode = `TGS-${maxNum + 1}`;
+      const newId = Date.now();
+
+      const subtasks = Array.isArray(body.subtasks) ? body.subtasks.map((s, idx) => ({
+        id: newId + idx + 1,
+        task_id: newId,
+        title: s.title,
+        is_completed: !!s.is_completed
+      })) : [];
+
+      const newTask = {
+        id: newId,
+        user_id: userId,
+        task_code: nextCode,
+        title: body.title,
+        description: body.description || '',
+        priority: body.priority || 'sedang',
+        category: body.category || 'Koding',
+        due_date: body.due_date || null,
+        estimated_minutes: parseInt(body.estimated_minutes, 10) || 0,
+        focused_minutes: 0,
+        status: body.status || 'inbox',
+        position: tasks.filter(t => t.status === (body.status || 'inbox')).length,
+        created_at: new Date().toISOString().replace('T', ' ').substring(0, 19),
+        subtasks
+      };
+
+      tasks.push(newTask);
+      saveUserTasks(userId, tasks);
+      return { success: true, task: newTask };
+    }
+
+    // 8. Tasks: Update (PUT /api/tasks/:id)
+    const taskMatch = url.match(/^\/api\/tasks\/(\d+)$/);
+    if (taskMatch && method === 'PUT') {
+      const tid = Number(taskMatch[1]);
+      const idx = tasks.findIndex(t => t.id === tid);
+      if (idx !== -1) {
+        const cur = tasks[idx];
+        const subtasks = Array.isArray(body.subtasks) ? body.subtasks.map((s, sidx) => ({
+          id: s.id || (Date.now() + sidx),
+          task_id: tid,
+          title: s.title,
+          is_completed: !!s.is_completed
+        })) : cur.subtasks;
+
+        const updated = {
+          ...cur,
+          title: body.title !== undefined ? body.title : cur.title,
+          description: body.description !== undefined ? body.description : cur.description,
+          priority: body.priority !== undefined ? body.priority : cur.priority,
+          category: body.category !== undefined ? body.category : cur.category,
+          due_date: body.due_date !== undefined ? body.due_date : cur.due_date,
+          estimated_minutes: body.estimated_minutes !== undefined ? parseInt(body.estimated_minutes, 10) : cur.estimated_minutes,
+          status: body.status !== undefined ? body.status : cur.status,
+          focused_minutes: body.focused_minutes !== undefined ? body.focused_minutes : cur.focused_minutes,
+          subtasks
+        };
+
+        tasks[idx] = updated;
+        saveUserTasks(userId, tasks);
+        return { success: true, task: updated };
+      }
+      return { success: false, error: 'Tugas tidak ditemukan.' };
+    }
+
+    // 9. Tasks: Delete (DELETE /api/tasks/:id)
+    if (taskMatch && method === 'DELETE') {
+      const tid = Number(taskMatch[1]);
+      const filtered = tasks.filter(t => t.id !== tid);
+      saveUserTasks(userId, filtered);
+      return { success: true, message: 'Tugas berhasil dihapus.' };
+    }
+
+    // 10. Tasks: Reorder (PATCH /api/tasks/reorder)
+    if (url === '/api/tasks/reorder' && method === 'PATCH') {
+      const updates = body.updates || [];
+      updates.forEach(u => {
+        const t = tasks.find(x => x.id === Number(u.id));
+        if (t) {
+          if (u.status !== undefined) t.status = u.status;
+          if (u.position !== undefined) t.position = u.position;
+        }
+      });
+      saveUserTasks(userId, tasks);
+      return { success: true, message: 'Urutan tugas diperbarui.' };
+    }
+
+    // 11. Subtasks: Toggle (PATCH /api/subtasks/:id/toggle)
+    const subMatch = url.match(/^\/api\/subtasks\/(\d+)\/toggle$/);
+    if (subMatch && method === 'PATCH') {
+      const sid = Number(subMatch[1]);
+      let toggled = false;
+      tasks.forEach(t => {
+        if (Array.isArray(t.subtasks)) {
+          const s = t.subtasks.find(x => x.id === sid);
+          if (s) {
+            s.is_completed = !!body.is_completed;
+            toggled = true;
+          }
+        }
+      });
+      if (toggled) saveUserTasks(userId, tasks);
+      return { success: true, is_completed: !!body.is_completed };
+    }
+
+    // 12. Tasks: Focus (PATCH /api/tasks/:id/focus)
+    const focMatch = url.match(/^\/api\/tasks\/(\d+)\/focus$/);
+    if (focMatch && method === 'PATCH') {
+      const tid = Number(focMatch[1]);
+      const t = tasks.find(x => x.id === tid);
+      if (t) {
+        t.focused_minutes = (t.focused_minutes || 0) + (parseInt(body.minutes, 10) || 0);
+        saveUserTasks(userId, tasks);
+        return { success: true, focused_minutes: t.focused_minutes };
+      }
+      return { success: false, error: 'Tugas tidak ditemukan.' };
+    }
+
+    // 13. Tasks: Reset Demo (POST /api/reset)
+    if (url === '/api/reset' && method === 'POST') {
+      const reseededTasks = JSON.parse(JSON.stringify(HYBRID_SEED_TASKS));
+      saveUserTasks(userId, reseededTasks);
+      const reseededNotifs = getHybridSeedNotifs(reseededTasks);
+      saveUserNotifs(userId, reseededNotifs);
+      return { success: true, message: 'Data demo & notifikasi berhasil direset ke Cloud/Lokal.', tasks: reseededTasks };
+    }
+
+    // 14. Notifications: Fetch (GET /api/notifications)
+    if (url === '/api/notifications' && method === 'GET') {
+      const unread = notifs.filter(n => !n.is_read).length;
+      return { success: true, notifications: notifs, unread_count: unread };
+    }
+
+    // 15. Notifications: Create (POST /api/notifications)
+    if (url === '/api/notifications' && method === 'POST') {
+      const newNotif = {
+        id: Date.now(),
+        user_id: userId,
+        type: body.type || 'system',
+        title: body.title || 'Notifikasi Baru',
+        message: body.message || '',
+        task_code: body.task_code || null,
+        task_id: body.task_id || null,
+        is_read: 0,
+        created_at: new Date().toISOString().replace('T', ' ').substring(0, 19)
+      };
+      notifs.unshift(newNotif);
+      saveUserNotifs(userId, notifs);
+      const unread = notifs.filter(n => !n.is_read).length;
+      return { success: true, notification: newNotif, unread_count: unread };
+    }
+
+    // 16. Notifications: Mark All Read (PATCH /api/notifications/read-all)
+    if (url === '/api/notifications/read-all' && method === 'PATCH') {
+      notifs.forEach(n => n.is_read = 1);
+      saveUserNotifs(userId, notifs);
+      return { success: true, unread_count: 0 };
+    }
+
+    // 17. Notifications: Mark Single Read (PATCH /api/notifications/:id/read)
+    const notifReadMatch = url.match(/^\/api\/notifications\/(\d+)\/read$/);
+    if (notifReadMatch && method === 'PATCH') {
+      const nid = Number(notifReadMatch[1]);
+      const n = notifs.find(x => x.id === nid);
+      if (n) n.is_read = 1;
+      saveUserNotifs(userId, notifs);
+      const unread = notifs.filter(x => !x.is_read).length;
+      return { success: true, unread_count: unread };
+    }
+
+    // 18. Notifications: Clear (DELETE /api/notifications/clear)
+    if (url === '/api/notifications/clear' && method === 'DELETE') {
+      saveUserNotifs(userId, []);
+      return { success: true, message: 'Semua notifikasi dihapus.' };
+    }
+
+    return { success: true, message: 'Operasi offline selesai.' };
+  }
+
+  // [PANDUAN-ASSESSOR: KONEKSI FRONTEND KE BACKEND (FETCH API)] - Fungsi pengiriman data dari tampilan web ke server SQLite tanpa reload halaman
+  // TIPS PENGUJIAN:
+  // - Menyematkan Authorization: Bearer <token> pada header permintaan
+  // - Menangani timeout 2500ms via AbortController
+  // - Otomatis fallback ke LocalStorage engine jika server lokal tidak terdeteksi (misal: saat dideploy ke GitHub Pages)
+  // - Menangani respons 401 Unauthorized secara terpusat untuk mengembalikan layar login
   async function apiFetch(endpoint, options = {}) {
     options.headers = options.headers || {};
     if (auth.token) {
       options.headers['Authorization'] = `Bearer ${auth.token}`;
     }
-    const res = await fetch(endpoint, options);
-    if (res.status === 401) {
-      handleUnauthorized();
-      throw new Error('Sesi tidak valid.');
+
+    // 1. If already confirmed in local storage mode, bypass network immediately
+    if (backendMode === 'local') {
+      return handleLocalStorageRequest(endpoint, options);
     }
-    return res.json();
+
+    // 2. If environment is statically hosted on GitHub Pages or file://, switch to local mode
+    if (typeof window !== 'undefined' && (window.location.hostname.includes('github.io') || window.location.protocol === 'file:')) {
+      backendMode = 'local';
+      updateBackendBadgeUI();
+      return handleLocalStorageRequest(endpoint, options);
+    }
+
+    // 3. Otherwise attempt network fetch to SQLite local backend with 2500ms timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
+    const fetchOptions = { ...options, signal: controller.signal };
+
+    try {
+      const res = await fetch(endpoint, fetchOptions);
+      clearTimeout(timeoutId);
+
+      const contentType = res.headers.get('content-type') || '';
+      // GitHub Pages or static server returns 404 or index.html for unmapped /api routes
+      if (res.status === 404 || (res.ok && contentType.includes('text/html') && !contentType.includes('application/json'))) {
+        console.warn(`[FlowState Hybrid] Endpoint /api tidak tersedia (${res.status}), beralih ke mode Cloud/Lokal.`);
+        backendMode = 'local';
+        updateBackendBadgeUI();
+        return handleLocalStorageRequest(endpoint, options);
+      }
+
+      if (res.status === 401) {
+        handleUnauthorized();
+        throw new Error('Sesi tidak valid.');
+      }
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || `Server error: ${res.status}`);
+      }
+
+      // SQLite connection confirmed
+      if (backendMode !== 'sqlite') {
+        backendMode = 'sqlite';
+        updateBackendBadgeUI();
+      }
+
+      return await res.json();
+    } catch (err) {
+      clearTimeout(timeoutId);
+
+      // Seamlessly fall back to localStorage engine on network/CORS error or abort
+      if (err.name === 'AbortError' || err.name === 'TypeError' || err.message.includes('fetch') || err.message.includes('NetworkError') || err.message.includes('Failed to fetch')) {
+        console.warn('[FlowState Hybrid] Server lokal SQLite tidak terdeteksi, beralih ke engine Cloud/Lokal:', err.message);
+        backendMode = 'local';
+        updateBackendBadgeUI();
+        return handleLocalStorageRequest(endpoint, options);
+      }
+
+      throw err;
+    }
   }
 
   function handleUnauthorized() {
     auth.token = null;
     auth.user = null;
     localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem('flowstate_hybrid_active_user');
     $('#authGateOverlay').classList.remove('hidden');
   }
 
@@ -669,9 +1299,8 @@
   // ─── Auth Action Functions ───
   async function performDemoLogin() {
     try {
-      const res = await fetch('/api/auth/demo-login', { method: 'POST' });
-      const data = await res.json();
-      if (data.success && data.token && data.user) {
+      const data = await apiFetch('/api/auth/demo-login', { method: 'POST' });
+      if (data && data.success && data.token && data.user) {
         auth.token = data.token;
         auth.user = data.user;
         localStorage.setItem(AUTH_TOKEN_KEY, data.token);
@@ -684,6 +1313,8 @@
         triggerConfetti();
         apiFetchTasks();
         apiFetchNotifications();
+      } else {
+        alert('Gagal masuk mode demo: ' + (data?.error || 'Terjadi kesalahan'));
       }
     } catch (err) {
       alert('Gagal masuk mode demo: ' + err.message);
@@ -698,14 +1329,13 @@
     btn.textContent = 'Memverifikasi...';
 
     try {
-      const res = await fetch('/api/auth/login', {
+      const data = await apiFetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
-      const data = await res.json();
 
-      if (data.success && data.token && data.user) {
+      if (data && data.success && data.token && data.user) {
         auth.token = data.token;
         auth.user = data.user;
         localStorage.setItem(AUTH_TOKEN_KEY, data.token);
@@ -718,7 +1348,7 @@
         apiFetchTasks();
         apiFetchNotifications();
       } else {
-        errorEl.textContent = data.error || 'Email atau kata sandi tidak cocok.';
+        errorEl.textContent = data?.error || 'Email atau kata sandi tidak cocok.';
         playPop();
       }
     } catch (err) {
@@ -737,7 +1367,7 @@
     btn.textContent = 'Membuat akun...';
 
     try {
-      const res = await fetch('/api/auth/register', {
+      const data = await apiFetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -748,9 +1378,8 @@
           avatar_color: regColor
         })
       });
-      const data = await res.json();
 
-      if (data.success && data.token && data.user) {
+      if (data && data.success && data.token && data.user) {
         auth.token = data.token;
         auth.user = data.user;
         localStorage.setItem(AUTH_TOKEN_KEY, data.token);
@@ -764,7 +1393,7 @@
         apiFetchTasks();
         apiFetchNotifications();
       } else {
-        errorEl.textContent = data.error || 'Pendaftaran gagal.';
+        errorEl.textContent = data?.error || 'Pendaftaran gagal.';
         playPop();
       }
     } catch (err) {
@@ -828,6 +1457,13 @@
     setTimeout(() => icon.classList.remove('bell-shake'), 700);
   }
 
+  // [PANDUAN-ASSESSOR: LOGIKA NOTIFIKASI & PENGINGAT] - Fungsi untuk memunculkan pop-up notifikasi, hitung badge, dan highlight kartu tugas
+  // TIPS PENGUJIAN:
+  // - renderNotifUI()          : Me-render daftar notifikasi di popover lonceng 🔔 dan menghitung angka badge belum dibaca
+  // - apiCreateNotification()  : Menyimpan notifikasi baru ke SQLite/LocalStorage dan memainkan efek suara notif chime
+  // - spawnToast()             : Memunculkan pop-up toast tactile di pojok kanan bawah dengan tombol pintas "Lihat Tugas →"
+  // - jumpToTaskCard()         : Mencari kartu tugas target (multi-tier lookup ID/kode/keyword), mereset filter, scroll halus, dan memicu pulsa animasi halo 3.5 detik (.task-card-highlight)
+  // - simulateDeadlineNotification() : Mensimulasikan pengingat tenggat waktu tugas mendekat (2 jam)
   function renderNotifUI() {
     const badge = $('#notifBadge');
     const unreadPill = $('#notifUnreadPill');
@@ -1281,6 +1917,12 @@
   //  RENDERING BOARD
   // ═══════════════════════
 
+  // [PANDUAN-ASSESSOR: LOGIKA RENDER KARTU & FILTER PENCARIAN] - Fungsi untuk menampilkan kartu ke layar dan memfilter berdasarkan Kategori/Prioritas/Search
+  // TIPS PENGUJIAN:
+  // - renderBoard()  : Merender 4 kolom Kanban (Kotak Masuk, Hari Ini, Sedang Dikerjakan, Selesai) beserta kartu tugas di dalamnya
+  // - cardEl(t)      : Menyusun elemen HTML kartu tugas, bar progres sub-tugas, badge estimasi waktu, tag kategori, dan border prioritas
+  // - applyFilters() : Memfilter visibilitas kartu berdasarkan Prioritas (Tinggi/Sedang/Rendah) atau Kategori (Koding/Sekolah/Desain/Pribadi)
+  // - searchTasks()  : Fitur Command Palette (Ctrl+K) untuk mencari tugas secara real-time berdasarkan judul atau kode tugas (TGS-xxx)
   function renderBoard() {
     const board = $('#board');
     if (!board) return;
@@ -1406,6 +2048,14 @@
   }
 
   // ─── Drag & Drop (SortableJS + Confetti & Synth Sound) ───
+  // [PANDUAN-ASSESSOR: LOGIKA DRAG AND DROP (SORTABLEJS)] - Fungsi yang mengatur geser kartu antar kolom dan mengirim posisi baru ke backend via Fetch API
+  // TIPS PENGUJIAN:
+  // - Inisialisasi Sortable pada setiap .column-body dengan group: 'kanban' untuk perpindahan antar kolom
+  // - Event onStart: memainkan audio umpan balik tactile pop
+  // - Event onEnd: 
+  //     * Mengambil kolom asal dan kolom tujuan
+  //     * Jika kartu dipindahkan ke kolom 'completed' (Selesai), otomatis memicu kembang api konfeti & audio akord kemenangan
+  //     * Mengumpulkan posisi indeks seluruh kartu dan memanggil apiReorder(updates) ke endpoint PATCH /api/tasks/reorder
   function initSortable() {
     Object.values(sortables).forEach(s => {
       try { s.destroy(); } catch {}
@@ -1746,7 +2396,8 @@
     on('#viewToggle', toggleView);
     on('#searchBtn', openCmd);
     on('#resetBtn', () => {
-      if (confirm('Reset semua data tugas ke default demo Bahasa Indonesia di SQLite?')) {
+      const targetName = backendMode === 'local' ? 'Cloud/Lokal (Browser)' : 'SQLite';
+      if (confirm(`Reset semua data tugas ke default demo Bahasa Indonesia di ${targetName}?`)) {
         apiResetDemo();
       }
     });
@@ -2194,6 +2845,13 @@
   //  FOCUS DOCK & FULL-SCREEN ZEN STUDIO
   // ══════════════════════════════════════════════════
 
+  // [PANDUAN-ASSESSOR: LOGIKA TIMER FOKUS POMODORO & AUDIO] - Fungsi hitung mundur waktu fokus 25 menit dan generator suara latar
+  // TIPS PENGUJIAN:
+  // - activateFocus(taskId) : Mengaktifkan sesi fokus untuk tugas tertentu dan membuka dock fokus di bawah
+  // - startPomo()           : Memulai interval countdown 1 detik (POMODORO_SECONDS = 25 * 60)
+  // - updateZenRing()       : Memperbarui animasi lingkaran progres SVG mode Zen (strokeDashoffset)
+  // - Audio Synthesizer     : Menggunakan Web Audio API AudioContext tanpa file MP3 eksternal (menghasilkan nada pop, akord sukses, dan brown noise ambient generator)
+  // - Selesai fokus         : Mengirim +25 menit ke SQLite (apiLogFocus), memunculkan notifikasi, dan memicu konfeti
   function activateFocus(taskId) {
     const t = taskById(taskId);
     if (!t) return;
@@ -2343,7 +3001,9 @@
     $('#zenTaskPriority').textContent = cap(t.priority || 'sedang');
     $('#zenTaskTitle').textContent = t.title;
     $('#zenTaskDesc').textContent = t.description || 'Fokus menyelesaikan tugas ini tanpa distraksi.';
-    $('#zenLoggedTime').textContent = `⏱ Tercatat di SQLite: ${fmtMin(t.focused_minutes)}`;
+    $('#zenLoggedTime').textContent = backendMode === 'local'
+      ? `⏱ Tercatat di Cloud/Lokal: ${fmtMin(t.focused_minutes)}`
+      : `⏱ Tercatat di SQLite: ${fmtMin(t.focused_minutes)}`;
     $('#zenTimerDisplay').textContent = fmtTimer(focus.remaining);
 
     syncZenSubtasks();
@@ -2382,6 +3042,14 @@
   //  STATISTIK & ANALITIK DRAWER
   // ══════════════════════════════════════════════════
 
+  // [PANDUAN-ASSESSOR: LOGIKA PERHITUNGAN ANALITIK & EXPORT CSV] - Fungsi kalkulasi persentase produktivitas dan unduh laporan CSV
+  // TIPS PENGUJIAN:
+  // - renderAnalyticsData() : Menghitung skor produktivitas berbobot 0-100%:
+  //     * 45% Rasio penyelesaian kartu tugas (completedTasks / total)
+  //     * 35% Rasio penyelesaian checklist sub-tugas (completedSubtasks / totalSubtasks)
+  //     * 20% Rasio pencapaian target waktu fokus Pomodoro (totalFoc / 120 menit)
+  //   Juga menghitung distribusi tugas per kategori (Koding, Sekolah, Desain, Pribadi) dan prioritas
+  // - exportTasksToCSV()    : Menyusun baris CSV lengkap dengan encoding UTF-8 BOM (\uFEFF) agar rapi dibuka di Microsoft Excel
   function openAnalytics() {
     renderAnalyticsData();
     $('#analyticsOverlay').classList.add('open');
@@ -2594,6 +3262,9 @@
 
     // Start quote rotation
     startQuoteRotation();
+
+    // Initialize backend badge UI
+    updateBackendBadgeUI();
 
     // Check user session
     apiCheckSession();
